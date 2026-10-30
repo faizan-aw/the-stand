@@ -6,7 +6,7 @@ const { Server } = require('socket.io');
 const CASES = require('./cases');
 
 const PORT = process.env.PORT || 3000;
-const MIN_PLAYERS = 6;
+const MIN_PLAYERS = 7;
 const MAX_PLAYERS = 16;
 const READ_SECS = 75;
 const STAND_SECS = 45;
@@ -68,7 +68,7 @@ function makeRoom() {
     endsAt: null,
     timer: null,
     round: 0,
-    settings: { crossMins: 12, verdictMins: 3, rounds: 3, sepJury: true },
+    settings: { crossMins: 12, verdictMins: 3, rounds: 3 },
     usedCases: [],
     g: null,
     lastActive: Date.now()
@@ -106,19 +106,14 @@ function startRound(room) {
   special.forEach(p => p.specials++);
   const [def, pro, dfn] = shuffle(special);
   const others = present.filter(p => !special.includes(p));
-  // Separate jury: some of the others become jurors with no private facts. Needs at least
-  // 2 witnesses and 2 jurors, so below 7 players everyone else is witness and juror.
-  let witnesses = others, jurorPlayers = others, separate = false;
-  if (room.settings.sepJury) {
-    let nJ = Math.max(2, Math.round(others.length * 0.45));
-    if (nJ % 2 === 0 && others.length - (nJ + 1) >= 2) nJ++;
-    if (others.length - nJ >= 2) {
-      const mixed = shuffle(others);
-      jurorPlayers = mixed.slice(0, nJ);
-      witnesses = mixed.slice(nJ);
-      separate = true;
-    }
-  }
+  // Witnesses and jurors are always different people. With 7 players or more there are
+  // at least 2 witnesses and 2 jurors. The jury count is kept odd where possible.
+  let nJ = Math.max(2, Math.round(others.length * 0.45));
+  if (nJ % 2 === 0 && others.length - (nJ + 1) >= 2) nJ++;
+  const mixed = shuffle(others);
+  const jurorPlayers = mixed.slice(0, nJ);
+  const witnesses = mixed.slice(nJ);
+  const separate = true;
 
   let pool = CASES.map((_, i) => i).filter(i => !room.usedCases.includes(i));
   if (!pool.length) { room.usedCases = []; pool = CASES.map((_, i) => i); }
@@ -203,10 +198,10 @@ function startRound(room) {
   hands[def.id] = {
     role: 'defendant',
     guilty,
-    facts: shuffle(atoms.map(a => a.idx)).slice(0, 2).map(i => ({ id: rid(6), atom: i, kind: 'true', text: atoms[i].truth }))
+    facts: shuffle(atoms.map(a => a.idx)).slice(0, 4).map(i => ({ id: rid(6), atom: i, kind: 'true', text: atoms[i].truth }))
   };
   const lead = idx => ({ atom: idx, text: atoms[idx].partial });
-  if (separate) jurorPlayers.forEach(p => { hands[p.id] = { role: 'juror', archetype: 'juror', want: 'truth', facts: [] }; });
+  jurorPlayers.forEach(p => { hands[p.id] = { role: 'juror', archetype: 'juror', want: 'truth', facts: [] }; });
   hands[pro.id] = { role: 'prosecutor', lead: lead(rnd(atoms.length)) };
   hands[dfn.id] = { role: 'defense', lead: lead(rnd(atoms.length)) };
 
@@ -234,6 +229,7 @@ function startRound(room) {
     ready: new Set(),
     stand: {},
     votes: {},
+    prelim: {},
     standPublic: null,
     result: null
   };
@@ -336,7 +332,6 @@ function resolveVerdict(room) {
     correct,
     timeline: g.atoms.map(a => ({ label: a.label, truth: a.truth, ex: a.ex, herring: a.herring })),
     votes: g.jurors.map(pid => ({ name: nameOf(pid), vote: g.votes[pid] || 'abstain' })),
-    separate: g.separate,
     witnesses: g.witnesses.map(pid => {
       const h = g.hands[pid];
       return {
@@ -465,10 +460,10 @@ function doStand(room, pid, choice) {
 
 function doVote(room, pid, choice) {
   const g = room.g;
-  if (room.phase !== 'verdict') return 'Voting is not open.';
+  if (room.phase !== 'verdict' && room.phase !== 'stand') return 'Voting is not open.';
   if (!g.jurors.includes(pid)) return 'Only jurors can vote.';
   if (choice !== 'guilty' && choice !== 'innocent') return 'Pick a verdict.';
-  g.votes[pid] = choice;
+  if (room.phase === 'stand') g.prelim[pid] = choice; else g.votes[pid] = choice;
   broadcast(room);
   checkEarly(room);
   return null;
@@ -554,7 +549,14 @@ function privateHand(g, pid) {
     };
   }
   if (h.role === 'juror') return { role: 'juror' };
-  if (h.role === 'defendant') return { role: 'defendant', guilty: h.guilty, facts: h.facts.map(f => ({ id: f.id, text: f.text })) };
+  if (h.role === 'defendant') {
+    const known = new Set(h.facts.map(f => f.atom));
+    return {
+      role: 'defendant', guilty: h.guilty,
+      facts: h.facts.map(f => ({ id: f.id, text: f.text, topic: g.atoms[f.atom].label })),
+      blind: g.atoms.filter(a => !known.has(a.idx)).map(a => a.label)
+    };
+  }
   return { role: h.role, lead: h.lead.text };
 }
 
@@ -617,8 +619,8 @@ function view(room, pid) {
     v.needStand = standers(room, g).includes(pid);
     v.stand = g.stand[pid] || null;
     v.vote = g.votes[pid] || null;
+    v.prelim = g.prelim[pid] || null;
     v.canVote = g.jurors.includes(pid);
-    v.separate = g.separate;
     v.done = g.done.has(pid);
     v.standPublic = g.standPublic;
     v.jurySize = g.jurors.length;
@@ -694,7 +696,6 @@ io.on('connection', socket => {
           const c = Number(msg.crossMins), r = Number(msg.rounds), vm = Number(msg.verdictMins);
           if ([3, 5, 8, 12, 15, 20, 30].includes(c)) room.settings.crossMins = c;
           if ([1, 2, 3, 5, 8].includes(vm)) room.settings.verdictMins = vm;
-          if (typeof msg.sepJury === 'boolean') room.settings.sepJury = msg.sepJury;
           if (r >= 1 && r <= 8) room.settings.rounds = r;
           broadcast(room);
         }
