@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f3ee">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="The Stand">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<title>The Stand</title>
+<style>
+:root{
+  --bg:#f6f3ee; --bg2:#efebe3; --card:#ffffff; --soft:#faf8f4; --line:#e6e0d5;
+  --ink:#25221d; --muted:#837c6f; --faint:#b9b2a4;
+  --navy:#27344d; --navy-ink:#ffffff; --gold:#b48a3c; --gold-soft:#f5ecd9;
+  --good:#3d8b62; --good-soft:#e5f2ea; --bad:#bd4f3c; --bad-soft:#f9e6e1; --warn:#a9791e; --warn-soft:#f7edd6;
+  --serif:Georgia,'Iowan Old Style','Times New Roman',serif;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --shadow:0 1px 2px rgba(60,45,20,.05),0 10px 28px rgba(60,45,20,.07);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5}
+body{min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+body.lock{overflow:hidden}
+#app{max-width:520px;margin:0 auto;padding:0 16px 72px}
+h1,h2,h3,.serif{font-family:var(--serif);font-weight:700;margin:0;letter-spacing:.1px}
+h1{font-size:40px;letter-spacing:5px}
+h2{font-size:22px;line-height:1.2}
+h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1.6px;font-family:var(--sans);font-weight:700;margin:0 0 8px}
+p{margin:0}
+b{font-weight:650}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.center{text-align:center}
+
+/* top bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 10px}
+.brand{font-family:var(--serif);font-size:13px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--navy)}
+.pill{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:650;cursor:pointer;font-family:var(--sans);display:inline-flex;align-items:center;gap:6px}
+.pill:active{transform:scale(.97)}
+.pill .q{width:18px;height:18px;border-radius:50%;background:var(--navy);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0;box-shadow:var(--shadow);animation:rise .35s ease both}
+.card.flat{box-shadow:none;background:var(--soft)}
+.card.hl{border-color:var(--gold);background:linear-gradient(180deg,#fffdf8,#fff)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.row{display:flex;gap:10px;align-items:center}
+.grow{flex:1;min-width:0}
+.stack>*+*{margin-top:12px}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+
+/* buttons and inputs */
+.btn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:14px 16px;border-radius:14px;font-size:16px;font-weight:650;width:100%;cursor:pointer;font-family:var(--sans);transition:transform .08s}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:var(--navy-ink)}
+.btn.good{border-color:var(--good);color:var(--good);background:var(--good-soft)}
+.btn.bad{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
+.btn.sel{box-shadow:0 0 0 3px rgba(39,52,77,.25)}
+.btn.sm{padding:8px 14px;font-size:14px;width:auto;border-radius:11px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btns{display:flex;gap:10px}
+.btns>*{flex:1}
+input,select,textarea{width:100%;background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:16px;font-family:var(--sans)}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(39,52,77,.35);border-color:var(--navy)}
+textarea{resize:none;min-height:76px}
+input.code{text-transform:uppercase;letter-spacing:10px;text-align:center;font-size:24px;font-weight:700;font-family:var(--serif)}
+label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+.err{color:var(--bad);font-size:14px;margin-top:10px;font-weight:600}
+
+/* chips */
+.chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:750;letter-spacing:.8px;border:1px solid var(--line);color:var(--muted);background:var(--soft);white-space:nowrap;text-transform:uppercase}
+.chip.defendant{background:#f8e7ec;color:#a23c5b;border-color:#efc6d2}
+.chip.prosecutor{background:#fbe9df;color:#b04d28;border-color:#f1cdb9}
+.chip.defense{background:#e3eef9;color:#2a679f;border-color:#bfd7ee}
+.chip.witness{background:#eeece7;color:#5d584e;border-color:#dcd7cb}
+.chip.good{background:var(--good-soft);color:var(--good);border-color:#c3e0cf}
+.chip.bad{background:var(--bad-soft);color:var(--bad);border-color:#efc7bf}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:#eadbb2}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--good);display:inline-block;flex:none}
+.dot.off{background:var(--faint)}
+
+/* stepper */
+.steps{display:flex;gap:6px;margin:4px 0 2px}
+.step{flex:1;text-align:center;font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--faint);text-transform:uppercase}
+.step i{display:block;height:5px;border-radius:5px;background:var(--bg2);margin-bottom:6px}
+.step.done i{background:var(--faint)}
+.step.on{color:var(--navy)}
+.step.on i{background:var(--navy)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;background:var(--bg2);border-radius:16px;padding:4px;margin:14px 0 4px;position:sticky;top:6px;z-index:5}
+.tab{flex:1;text-align:center;padding:10px 4px;border-radius:12px;font-weight:650;font-size:14px;cursor:pointer;color:var(--muted)}
+.tab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(60,45,20,.12)}
+.badge{background:var(--bad);color:#fff;border-radius:999px;padding:0 7px;font-size:11px;margin-left:5px;font-weight:700}
+
+/* game bits */
+.role-banner{border-radius:20px;padding:16px;margin:12px 0;animation:rise .35s ease both}
+.role-banner .who{font-family:var(--serif);font-size:24px;font-weight:700;line-height:1.15}
+.role-banner .goal{margin-top:4px;font-size:15px}
+.role-banner.defendant{background:#f8e7ec;color:#7d2b44}
+.role-banner.prosecutor{background:#fbe9df;color:#8a3a1c}
+.role-banner.defense{background:#e3eef9;color:#1f4f7c}
+.role-banner.witness{background:#eeece7;color:#4a463e}
+.role-banner.spectator{background:#eeece7;color:#4a463e}
+.todo{font-size:17px;line-height:1.45}
+.todo-sub{margin-top:8px;font-size:14px;color:var(--muted)}
+.bignum{font-family:var(--serif);font-weight:700;color:var(--navy)}
+.timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:22px;font-family:var(--serif);color:var(--navy)}
+.fact{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--soft)}
+.fact.lie{border-color:#e8b9af;background:#fdf4f1}
+.fact .tag{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:700}
+.fact.lie .tag{color:var(--bad)}
+.rec{border-left:4px solid var(--line);padding:9px 12px;margin:10px 0;background:var(--soft);border-radius:0 12px 12px 0}
+.rec.confirmed{border-color:var(--good);background:#f3faf6}
+.rec.contradicted{border-color:var(--bad);background:#fdf4f1}
+.rec.recanted{opacity:.5}
+.rec.recanted .tx{text-decoration:line-through}
+.ex{border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0;background:var(--soft)}
+.ex.rev{border-color:var(--gold);background:#fffaf0}
+.verdict{font-family:var(--serif);font-size:44px;font-weight:700;letter-spacing:3px;margin:4px 0;animation:stamp .55s cubic-bezier(.2,1.4,.4,1) both}
+.verdict.guilty{color:var(--bad)}
+.verdict.innocent{color:var(--good)}
+@keyframes stamp{from{opacity:0;transform:scale(1.7) rotate(-4deg)}to{opacity:1;transform:none}}
+.score{font-variant-numeric:tabular-nums;font-weight:700}
+.msg{border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin:8px 0;background:var(--soft)}
+.msg .from{font-size:12px;color:var(--gold);font-weight:700;margin-bottom:2px;text-transform:uppercase;letter-spacing:.8px}
+ul.plain{list-style:none;padding:0;margin:0}
+ul.plain li{padding:10px 0;border-bottom:1px solid var(--line)}
+ul.plain li:last-child{border-bottom:0}
+.code-big{font-family:var(--serif);font-size:62px;font-weight:700;letter-spacing:12px;color:var(--navy);text-align:center;line-height:1.1;margin:2px 0 4px;padding-left:12px}
+#qr{display:flex;justify-content:center;margin:12px 0}
+#qr img{width:176px;height:176px;image-rendering:pixelated;border:10px solid #fff;border-radius:14px;box-shadow:0 0 0 1px var(--line)}
+.dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--faint);margin:0 2px;animation:blink 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* toast */
+#toast{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));max-width:496px;margin:0 auto;z-index:80;pointer-events:none}
+.toast{background:var(--navy);color:#fff;padding:13px 16px;border-radius:14px;font-weight:600;margin-bottom:8px;box-shadow:0 10px 30px rgba(30,30,50,.28);animation:rise .25s ease both}
+.toast.err{background:var(--bad)}
+.toast.whisper{background:#fff;color:var(--ink);border:1px solid var(--gold)}
+
+/* sheet */
+#sheet{position:fixed;inset:0;z-index:60;display:none}
+#sheet.on{display:block}
+.scrim{position:absolute;inset:0;background:rgba(37,34,29,.45);animation:fade .2s ease both}
+.panel{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--bg);border-radius:26px 26px 0 0;max-height:88vh;display:flex;flex-direction:column;animation:slide .28s cubic-bezier(.2,.9,.3,1) both}
+.panel .head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 10px}
+.panel .body{overflow:auto;padding:0 20px calc(26px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes slide{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:10px 0;overflow:hidden}
+summary{padding:14px 16px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';color:var(--muted);font-size:20px;font-weight:400}
+details[open] summary::after{content:'\2212'}
+details .in{padding:0 16px 16px;font-size:15px}
+details .in p+p{margin-top:8px}
+details .in ul{margin:6px 0 0;padding-left:18px}
+details .in li{margin:5px 0}
+.now{background:var(--gold-soft);border:1px solid #ecdcb4;border-radius:16px;padding:14px;margin:6px 0 12px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="app"></div>
+<div id="sheet"></div>
+<noscript>This game needs JavaScript.</noscript>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/vendor/dist/qrcode.js"></script>
+<script>
+(function(){
+'use strict';
+var $ = function(s){ return document.querySelector(s); };
+var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
+
+var S = null, session = null, tab = 'file', lastRound = 0, seenInbox = 0, offset = 0;
+var lastPhase = '', homeError = '', draft = { to: '', text: '' }, connected = false, sheetOpen = false;
+
+try { session = JSON.parse(localStorage.getItem('stand_session') || 'null'); } catch (e) { session = null; }
+var urlRoom = (new URLSearchParams(location.search).get('room') || '').toUpperCase().slice(0, 4);
+var socket = io({ reconnection: true });
+
+socket.on('connect', function(){
+  connected = true;
+  if (session) {
+    socket.emit('rejoin', session, function(res){
+      if (!res || !res.ok) { clearSession(); S = null; }
+      render();
+    });
+  } else render();
+});
+socket.on('disconnect', function(){ connected = false; });
+socket.on('state', function(st){
+  S = st;
+  offset = st.serverNow - Date.now();
+  if (st.round !== lastRound) { lastRound = st.round; tab = 'file'; seenInbox = 0; }
+  render();
+});
+socket.on('notice', function(n){
+  toast(n.text, n.kind === 'whisper' ? 'whisper' : '', n.kind === 'exhibit' ? 7000 : 4500);
+  if (n.kind === 'whisper' && navigator.vibrate) navigator.vibrate(120);
+});
+socket.on('kicked', function(){ clearSession(); S = null; homeError = 'The host removed you from the room.'; render(); });
+
+function saveSession(code, token){ session = { code: code, token: token }; try { localStorage.setItem('stand_session', JSON.stringify(session)); } catch (e) {} }
+function clearSession(){ session = null; try { localStorage.removeItem('stand_session'); } catch (e) {} }
+function toast(text, cls, ms){
+  var el = document.createElement('div');
+  el.className = 'toast ' + (cls || '');
+  el.textContent = text;
+  $('#toast').appendChild(el);
+  setTimeout(function(){ el.remove(); }, ms || 3500);
+}
+function act(type, extra){
+  socket.emit('act', Object.assign({ type: type }, extra || {}), function(res){
+    if (res && !res.ok) toast(res.error || 'That did not work.', 'err');
+  });
+}
+
+/* ---------- sheet (rules, confirm) ---------- */
+function openSheet(title, bodyHTML){
+  $('#sheet').innerHTML = '<div class="scrim" data-act="closesheet"></div><div class="panel" role="dialog" aria-modal="true"><div class="head"><h2>' + esc(title) + '</h2><button class="pill" data-act="closesheet">Close</button></div><div class="body">' + bodyHTML + '</div></div>';
+  $('#sheet').classList.add('on');
+  document.body.classList.add('lock');
+  sheetOpen = true;
+}
+function closeSheet(){
+  $('#sheet').classList.remove('on');
+  $('#sheet').innerHTML = '';
+  document.body.classList.remove('lock');
+  sheetOpen = false;
+}
+
+var NOW = {
+  read: 'Read your private file in the My file tab and keep your screen to yourself. When you are done, tap I\'m ready. The game moves on once everyone is ready, or when the timer ends.',
+  cross: 'Cross-examination is out loud, in the room. Lawyers question the witnesses. Witnesses can put facts on the record from My file. Lawyers can spend their exhibit requests in the Court tab. Anyone can send private whispers.',
+  stand: 'Everyone who put something on the record now chooses: stand by it, or recant. Choices are secret until everyone has decided, then they are shown together.',
+  verdict: 'Only witnesses vote. Everyone else watches. Conviction needs more than half of the jury. A tie means not guilty.',
+  reveal: 'The truth is out. Look at who lied, why they did it, and how the points were earned.'
+};
+
+function rulesHTML(){
+  var h = '';
+  if (S && NOW[S.phase]) h += '<div class="now"><h3 style="color:var(--gold)">Right now</h3><p>' + esc(NOW[S.phase]) + '</p></div>';
+  h += '<details open><summary>The idea</summary><div class="in">' +
+    '<p>Someone is on trial. Nobody knows for sure whether they did it. Everyone holds a small piece of the truth, and some of those pieces are lies. Even the real evidence is mixed: a couple of true facts in every case are <b>red herrings</b> that point the wrong way.</p>' +
+    '<p>Talk, bluff, make deals, then decide. When the verdict is in, the game shows what really happened and who was lying.</p>' +
+    '<p>You need <b>6 to 16 players</b>, each on their own phone, in the same room. It is best with 8 or more.</p></div></details>';
+  h += '<details><summary>The roles</summary><div class="in"><ul>' +
+    '<li><b>Defendant</b> (1). Secretly knows whether they did it. Wants to be acquitted, and may say anything.</li>' +
+    '<li><b>Prosecutor</b> (1). Wants a conviction, whatever the truth.</li>' +
+    '<li><b>Defense</b> (1). Wants an acquittal, whatever the truth.</li>' +
+    '<li><b>Witness</b> (everyone else). Holds private facts and a private motive. Witnesses are also the jury.</li></ul>' +
+    '<p>Roles are dealt again every case, so everyone gets a turn at the interesting ones.</p></div></details>';
+  h += '<details><summary>How one case plays</summary><div class="in"><ul>' +
+    '<li><b>1. Read.</b> Study your private file.</li>' +
+    '<li><b>2. Cross-examine.</b> Talk out loud. Put facts on the record, request exhibits, whisper.</li>' +
+    '<li><b>3. Stand or recant.</b> Each witness secretly decides whether to stand by their record. Answers are shown together.</li>' +
+    '<li><b>4. Verdict.</b> The jury votes secretly. All votes are shown at once.</li>' +
+    '<li><b>5. The truth.</b> The real story, the liars and everyone\'s motives are revealed, then points are counted.</li></ul></div></details>';
+  h += '<details><summary>Facts, the record and exhibits</summary><div class="in">' +
+    '<p>A witness has two private facts. A fact can be <b>clear</b> (true), <b>vague</b> (true but fuzzy) or a <b>cover story</b> (false, only for liars).</p>' +
+    '<p>You can say anything out loud. Only facts you <b>put on the record</b> can be checked. They are visible to everyone in the Court tab.</p>' +
+    '<p>Each lawyer has <b>2 exhibit requests</b>. An exhibit shows the real answer on one topic. Anything on the record about that topic is marked <b>Confirmed</b> or <b>Contradicted</b>. A lawyer does not know what an exhibit will show, so it can hurt their own side.</p></div></details>';
+  h += '<details><summary>Whispers</summary><div class="in">' +
+    '<p>You can send <b>3 private notes</b> per case, up to 140 characters each, to anyone in the case. Use them for deals, threats, hints and lies. Nobody else sees them until you show them.</p></div></details>';
+  h += '<details><summary>Stand or recant</summary><div class="in">' +
+    '<p>If you put anything on the record, you choose to stand by it or recant. Recanting strikes all your testimony from the record, but it costs <b>2 points</b> and you lose any confirmation bonus. If an exhibit already caught you lying, recanting does not erase that: you still lose the 2 points for being caught, on top of the 2 for recanting.</p></div></details>';
+  h += '<details><summary>Scoring</summary><div class="in"><ul>' +
+    '<li>Prosecutor wins on a conviction: <b>+5</b></li>' +
+    '<li>Defense and Defendant win on an acquittal: <b>+3</b> each</li>' +
+    '<li>Testimony confirmed by an exhibit: <b>+1</b> each, up to <b>+2</b></li>' +
+    '<li>Caught lying by an exhibit: <b>-2</b></li>' +
+    '<li>Recanting: <b>-2</b></li>' +
+    '<li>Witness who only wanted the truth, if the jury is right: <b>+2</b></li>' +
+    '<li>Witness with a secret motive who gets the verdict they wanted: <b>+3</b></li>' +
+    '<li>Juror who votes correctly: <b>+1</b></li></ul></div></details>';
+  h += '<details><summary>Tips</summary><div class="in"><ul>' +
+    '<li><b>Liars:</b> mix your cover story with something true. Stay calm. Once cross-examination ends you can no longer be exposed, so recanting then is only a way to lose points.</li>' +
+    '<li><b>Lawyers:</b> make witnesses commit to the record before you spend an exhibit.</li>' +
+    '<li><b>Honest witnesses:</b> put your clear facts on the record early. Confirmed testimony is worth points.</li>' +
+    '<li><b>Everyone:</b> watch who is eager to push a particular verdict.</li></ul></div></details>';
+  return h;
+}
+
+/* ---------- helpers ---------- */
+var PHASE = { read: 'Read your file', cross: 'Cross-examination', stand: 'Stand or recant', verdict: 'Verdict', reveal: 'The truth' };
+var STEPS = [['read', 'Read'], ['cross', 'Question'], ['stand', 'Stand'], ['verdict', 'Verdict']];
+var ROLE = { defendant: 'Defendant', prosecutor: 'Prosecutor', defense: 'Defense', witness: 'Witness', spectator: 'Spectator' };
+function chip(role){ return '<span class="chip ' + esc(role) + '">' + esc(ROLE[role] || role) + '</span>'; }
+function fmt(ms){ ms = Math.max(0, ms); var s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+function sortedPlayers(){ return S.players.slice().sort(function(a, b){ return b.score - a.score; }); }
+function archeLabel(a){ return a === 'liar' ? 'Liar' : a === 'biased' ? 'Biased' : 'Honest'; }
+function archeClass(a){ return a === 'liar' ? 'bad' : a === 'biased' ? 'warn' : 'good'; }
+function hostBanner(){
+  if (!S || S.hostOnline || S.me.isHost) return '';
+  return '<div class="card flat center"><p class="small muted">The host has left the game.</p><button class="btn sm" style="margin-top:8px" data-act="claim">Take over as host</button></div>';
+}
+function topBar(extra, noBrand){
+  return '<div class="bar"><span class="brand">' + (noBrand ? '' : 'The Stand') + '</span><div class="row">' + (extra || '') + '<button class="pill" data-act="rules"><span class="q">?</span>Rules</button></div></div>';
+}
+
+/* ---------- screens ---------- */
+function homeHTML(){
+  var name = ''; try { name = localStorage.getItem('stand_name') || ''; } catch (e) {}
+  return topBar('', true) +
+  '<div class="center" style="margin:14px 0 20px"><div class="muted small" style="letter-spacing:3px;text-transform:uppercase">A game of lies under oath</div>' +
+  '<h1 style="margin-top:8px">THE STAND</h1></div>' +
+  '<div class="card stack">' +
+    '<div><label for="name">Your name</label><input id="name" maxlength="16" autocomplete="off" value="' + esc(name) + '" placeholder="What should we call you?"></div>' +
+    (urlRoom ? '' : '<button class="btn primary" data-act="create">Create a room</button><div class="center muted small">or join a friend\'s room</div>') +
+    '<div><label for="code">Room code</label><input id="code" class="code" maxlength="4" autocomplete="off" value="' + esc(urlRoom) + '" placeholder="ABCD"></div>' +
+    '<button class="btn ' + (urlRoom ? 'primary' : '') + '" data-act="join">Join room</button>' +
+    (urlRoom ? '<button class="btn sm" style="width:100%" data-act="create">Create my own room instead</button>' : '') +
+    (homeError ? '<div class="err">' + esc(homeError) + '</div>' : '') +
+  '</div>' +
+  '<p class="muted small center">6 to 16 players, best with 8 or more. Everyone plays from their own phone.<br>New here? Tap <b>Rules</b> at the top.</p>' +
+  (connected ? '' : '<p class="muted small center" style="margin-top:14px">Connecting<span class="dots"> <span></span><span></span><span></span></span><br>If the server was asleep this can take up to a minute.</p>');
+}
+
+function lobbyHTML(){
+  var me = S.me, url = location.origin + '/?room=' + S.code;
+  var online = S.players.filter(function(p){ return p.online; }).length;
+  var h = topBar('<span class="chip">Lobby</span>') +
+  '<div class="card center">' +
+    '<div class="muted small" style="font-weight:700;letter-spacing:2px;text-transform:uppercase">Room code</div>' +
+    '<div class="code-big">' + esc(S.code) + '</div>' +
+    '<div id="qr"></div>' +
+    '<div class="muted small">Friends can scan this, or open the link</div>' +
+    '<div class="muted small" style="word-break:break-all;margin-top:4px">' + esc(url) + '</div>' +
+    '<div class="btns" style="margin-top:14px"><button class="btn sm" data-act="copy">Copy link</button><button class="btn sm" data-act="share">Share</button></div>' +
+  '</div>' +
+  '<div class="card"><div class="row" style="margin-bottom:6px"><h3 class="grow" style="margin:0">Players (' + online + ')</h3><span class="muted small">need ' + S.minPlayers + ' or more</span></div><ul class="plain">';
+  S.players.forEach(function(p){
+    h += '<li class="row"><span class="dot ' + (p.online ? '' : 'off') + '"></span><span class="grow">' + esc(p.name) +
+      (p.id === S.hostId ? ' <span class="chip">Host</span>' : '') + (p.bot ? ' <span class="chip">Bot</span>' : '') + (p.id === me.id ? ' <span class="muted small">(you)</span>' : '') + '</span>' +
+      (p.id === me.id ? '<button class="btn sm" data-act="rename" data-name="' + esc(p.name) + '">Edit name</button>' : '') +
+      (me.isHost && p.id !== me.id ? '<button class="btn sm" data-act="kick" data-pid="' + esc(p.id) + '">Remove</button>' : '') + '</li>';
+  });
+  h += '</ul></div>';
+  if (me.isHost) {
+    h += '<div class="card stack"><h3>Game settings</h3>' +
+      '<div><label for="set-cross">Cross-examination length</label><select id="set-cross">' +
+      [2, 3, 5, 8, 12].map(function(m){ return '<option value="' + m + '"' + (S.settings.crossMins === m ? ' selected' : '') + '>' + m + ' minutes</option>'; }).join('') + '</select></div>' +
+      '<div><label for="set-rounds">Number of cases</label><select id="set-rounds">' +
+      [1, 2, 3, 4, 5, 6, 8].map(function(r){ return '<option value="' + r + '"' + (S.settings.rounds === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></div></div>' +
+      '<button class="btn primary" data-act="startgame"' + (online < S.minPlayers ? ' disabled' : '') + '>Start the trial</button>' +
+      (online < S.minPlayers ? '<p class="muted small center" style="margin-top:10px">Waiting for ' + (S.minPlayers - online) + ' more player' + (S.minPlayers - online === 1 ? '' : 's') + '</p>' : '') +
+      '<div class="card flat stack" style="margin-top:18px"><h3>Add a player by name</h3><p class="muted small">For someone without a phone, or to try the game alone. The seat plays by itself, like a bot.</p>' +
+      '<div class="row"><input id="seat-name" maxlength="16" autocomplete="off" placeholder="Name"><button class="btn sm" data-act="addseat">Add</button></div></div>' +
+      '<div class="card flat stack"><h3>Test bots</h3><p class="muted small">Want to try it alone? Bots take seats and play by themselves.</p>' +
+      '<div class="btns"><button class="btn sm" data-act="bots" data-n="1">+1 bot</button><button class="btn sm" data-act="bots" data-n="4">+4 bots</button><button class="btn sm" data-act="clearbots">Clear</button></div></div>';
+  } else {
+    h += '<div class="card center"><p>Waiting for the host to start<span class="dots"> <span></span><span></span><span></span></span></p>' +
+      (S.hostOnline ? '' : '<button class="btn sm" style="margin-top:12px" data-act="claim">Host is offline. Take over</button>') + '</div>';
+  }
+  return h;
+}
+
+function stepper(){
+  var idx = -1;
+  STEPS.forEach(function(s, i){ if (s[0] === S.phase) idx = i; });
+  if (S.phase === 'reveal') idx = STEPS.length;
+  return '<div class="steps">' + STEPS.map(function(s, i){
+    return '<div class="step ' + (i < idx ? 'done' : i === idx ? 'on' : '') + '"><i></i>' + s[1] + '</div>';
+  }).join('') + '</div>';
+}
+
+function roleBanner(){
+  var r = S.role, goal = '';
+  if (r === 'defendant') goal = 'Get acquitted. You know the truth. Say whatever helps.';
+  else if (r === 'prosecutor') goal = 'Convince the jury to convict.';
+  else if (r === 'defense') goal = 'Convince the jury to acquit.';
+  else if (r === 'witness') goal = S.hand && S.hand.want === 'convict' ? 'Secret goal: get a conviction.' : S.hand && S.hand.want === 'acquit' ? 'Secret goal: get an acquittal.' : 'Goal: help the jury reach the right verdict.';
+  else goal = 'You will be dealt in next case.';
+  return '<div class="role-banner ' + esc(r) + '"><div class="small" style="font-weight:700;letter-spacing:1.4px;text-transform:uppercase;opacity:.75">You are</div><div class="who">' + (r === 'witness' ? 'a Witness and Juror' : 'the ' + esc(ROLE[r] || r)) + '</div><div class="goal">' + esc(goal) + '</div></div>';
+}
+
+function todoCard(){
+  var p = S.progress, ph = S.phase, g = '';
+  if (ph === 'read') {
+    if (S.role === 'spectator') return '<div class="card"><p class="todo">You joined mid-trial. You will be dealt in next case.</p></div>';
+    g = '<p class="todo">Read your file in <b>My file</b>. Keep it private.</p>' +
+      '<button class="btn primary" style="margin-top:14px" data-act="ready"' + (S.ready ? ' disabled' : '') + '>' + (S.ready ? 'Ready. Waiting for the others' : 'I\'m ready') + '</button>' +
+      '<p class="todo-sub">' + p.ready + ' of ' + p.readyTotal + ' ready</p>';
+  } else if (ph === 'cross') {
+    g = '<p class="todo"><b>Talk out loud.</b> Court is in session.</p>';
+    if (S.role === 'witness') g += '<p class="todo-sub">Answer questions. Put facts on the record from <b>My file</b> when you are ready to commit to them.</p>';
+    else if (S.role === 'prosecutor' || S.role === 'defense') g += '<p class="todo-sub">Question the witnesses. You have <b>' + S.exhibitsLeft + '</b> exhibit request' + (S.exhibitsLeft === 1 ? '' : 's') + ' left, in the <b>Court</b> tab.</p>';
+    else if (S.role === 'defendant') g += '<p class="todo-sub">You can say anything. Lie if it helps.</p>';
+    else g += '<p class="todo-sub">You are watching this case. You will be dealt in next time.</p>';
+    if (S.me.isHost) g += '<button class="btn sm" style="margin-top:14px" data-act="skip">End cross-examination</button>';
+  } else if (ph === 'stand') {
+    if (S.needStand) {
+      g = '<p class="todo">Stand by your testimony, or recant?</p>' +
+        '<div class="btns" style="margin-top:14px"><button class="btn good' + (S.stand === 'stand' ? ' sel' : '') + '" data-act="stand" data-choice="stand">Stand by it</button>' +
+        '<button class="btn bad' + (S.stand === 'recant' ? ' sel' : '') + '" data-act="stand" data-choice="recant">Recant</button></div>' +
+        '<p class="todo-sub">Recanting costs 2 points and strikes your testimony.</p>';
+    } else g = '<p class="todo">Witnesses are deciding whether to stand by their testimony.</p>';
+    g += '<p class="todo-sub">' + p.stand + ' of ' + p.standTotal + ' decided</p>';
+    if (S.me.isHost) g += '<button class="btn sm" style="margin-top:10px" data-act="skip">Skip</button>';
+  } else if (ph === 'verdict') {
+    if (S.standPublic && S.standPublic.length) {
+      g += '<div class="small muted" style="margin-bottom:12px">' + S.standPublic.map(function(x){ return esc(x.name) + (x.choice === 'recant' ? ' <b style="color:var(--bad)">recanted</b>' : ' stood by their testimony'); }).join('<br>') + '</div>';
+    }
+    if (S.role === 'witness') {
+      g += '<p class="todo">You are on the jury. How do you vote?</p>' +
+        '<div class="btns" style="margin-top:14px"><button class="btn bad' + (S.vote === 'guilty' ? ' sel' : '') + '" data-act="vote" data-choice="guilty">Guilty</button>' +
+        '<button class="btn good' + (S.vote === 'innocent' ? ' sel' : '') + '" data-act="vote" data-choice="innocent">Not guilty</button></div>';
+    } else g += '<p class="todo">The jury is voting.</p>';
+    g += '<p class="todo-sub">' + p.voted + ' of ' + p.votedTotal + ' voted</p>';
+    if (S.me.isHost) g += '<button class="btn sm" style="margin-top:10px" data-act="skip">Close the vote</button>';
+  } else return '';
+  return '<div class="card hl">' + g + '</div>';
+}
+
+function fileTab(){
+  var h = S.hand, out = '';
+  if (!h) return '<div class="card"><p>You are watching this case. You will be dealt in next time.</p></div>';
+  if (h.role === 'witness') {
+    out += '<div class="card"><h3>Your angle</h3><p>' + esc(h.motive) + '</p></div>';
+    out += '<div class="card"><h3>What you know</h3><div class="stack">';
+    h.facts.forEach(function(f){
+      var tag = f.kind === 'lie' ? 'Cover story. This is false.' : f.kind === 'partial' ? 'You remember vaguely' : 'You remember clearly';
+      out += '<div class="fact ' + (f.kind === 'lie' ? 'lie' : '') + '"><div class="tag">' + tag + '</div><p>' + esc(f.text) + '</p>' +
+        '<div style="margin-top:10px">' +
+        (f.onRecord ? '<span class="chip good">On the record</span>' :
+          (f.shown ? '<span class="chip warn">Already shown in court</span>' : '<button class="btn sm" data-act="testify" data-id="' + esc(f.id) + '"' + (S.phase === 'cross' ? '' : ' disabled') + '>Put on the record</button>')) +
+        '</div></div>';
+    });
+    out += '</div><p class="muted small" style="margin-top:12px">You can say these out loud without putting them on the record. Only the record can be checked by exhibits. Once an exhibit covers a topic, that fact can no longer go on the record.</p></div>';
+  } else if (h.role === 'defendant') {
+    out += '<div class="card ' + (h.guilty ? '' : 'hl') + '"><h3>The truth</h3><p class="serif" style="font-size:24px">' + (h.guilty ? 'You did it.' : 'You are innocent.') + '</p>' +
+      '<p class="muted small" style="margin-top:6px">Nobody can check your word except through exhibits.</p></div>';
+    out += '<div class="card"><h3>Facts you know</h3><div class="stack">' +
+      h.facts.map(function(f){ return '<div class="fact"><p>' + esc(f.text) + '</p></div>'; }).join('') + '</div></div>';
+  } else {
+    out += '<div class="card"><h3>Your lead</h3><div class="fact"><p>' + esc(h.lead) + '</p></div>' +
+      '<p class="muted small" style="margin-top:10px">That is all you start with. Ask questions to find out more.</p></div>';
+  }
+  return out;
+}
+
+function courtTab(){
+  var h = '<div class="card"><h3>The case</h3><p>' + esc(S.case.blurb) + '</p></div>';
+  h += '<div class="card"><h3>In court</h3><ul class="plain">';
+  S.players.forEach(function(p){
+    if (!p.role || p.role === 'Spectator') return;
+    h += '<li class="row"><span class="grow">' + esc(p.name) + '</span>' + chip(p.role.toLowerCase()) + '</li>';
+  });
+  h += '</ul></div>';
+  h += '<div class="card"><h3>The record</h3>';
+  if (!S.record.length) h += '<p class="muted small">Nothing on the record yet.</p>';
+  S.record.forEach(function(e){
+    var st = e.status === 'confirmed' ? '<span class="chip good">Confirmed</span>' : e.status === 'contradicted' ? '<span class="chip bad">Contradicted</span>' : e.status === 'recanted' ? '<span class="chip">Recanted</span>' : '<span class="chip">Unchecked</span>';
+    h += '<div class="rec ' + esc(e.status) + '"><div class="small" style="margin-bottom:3px"><b>' + esc(e.name) + '</b> ' + st + '</div><div class="tx">' + esc(e.text) + '</div></div>';
+  });
+  h += '</div>';
+  h += '<div class="card"><h3>Exhibits</h3>';
+  var lawyer = S.role === 'prosecutor' || S.role === 'defense';
+  var canAsk = lawyer && S.phase === 'cross' && S.exhibitsLeft > 0;
+  if (lawyer) h += '<p class="muted small" style="margin-bottom:6px">You have <b>' + S.exhibitsLeft + '</b> request' + (S.exhibitsLeft === 1 ? '' : 's') + ' left.</p>';
+  S.exhibits.forEach(function(x){
+    h += '<div class="ex ' + (x.revealed ? 'rev' : '') + '"><div class="row"><div class="grow"><b>' + esc(x.name) + '</b></div>' +
+      (x.revealed ? '<span class="chip warn">Entered</span>' : (canAsk ? '<button class="btn sm" data-act="exhibit" data-atom="' + x.atom + '" data-name="' + esc(x.name) + '">Request</button>' : '')) + '</div>' +
+      (x.revealed ? '<p style="margin-top:8px">' + esc(x.text) + '</p>' : '') + '</div>';
+  });
+  return h + '</div>';
+}
+
+function notesTab(){
+  var h = '';
+  if (S.canWhisper && (S.phase === 'read' || S.phase === 'cross')) {
+    h += '<div class="card stack"><div class="row"><h3 class="grow" style="margin:0">Send a whisper</h3><span class="chip">' + S.whispersLeft + ' left</span></div>';
+    if (S.whispersLeft > 0) {
+      h += '<div><label for="w-to">To</label><select id="w-to"><option value="">Choose a player</option>' +
+        S.whisperTargets.map(function(t){ return '<option value="' + esc(t.id) + '"' + (draft.to === t.id ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '</select></div>' +
+        '<div><label for="w-text">Message</label><textarea id="w-text" maxlength="140" placeholder="Offer a deal, drop a hint, or lie.">' + esc(draft.text) + '</textarea></div>' +
+        '<button class="btn primary" data-act="whisper">Send privately</button>';
+    } else h += '<p class="muted small">You have used all your whispers this case.</p>';
+    h += '</div>';
+  }
+  h += '<div class="card"><h3>Received</h3>';
+  if (!S.inbox.length) h += '<p class="muted small">Nothing yet.</p>';
+  S.inbox.slice().reverse().forEach(function(m){ h += '<div class="msg"><div class="from">' + esc(m.from) + '</div>' + esc(m.text) + '</div>'; });
+  h += '</div><div class="card"><h3>Sent</h3>';
+  if (!S.sent.length) h += '<p class="muted small">Nothing yet.</p>';
+  S.sent.slice().reverse().forEach(function(m){ h += '<div class="msg"><div class="from">To ' + esc(m.to) + '</div>' + esc(m.text) + '</div>'; });
+  return h + '</div>';
+}
+
+function resultHTML(){
+  var r = S.result, h = '';
+  h += '<div class="card center hl">' +
+    '<div class="muted small" style="font-weight:700;letter-spacing:2px;text-transform:uppercase">The jury says</div>' +
+    '<div class="verdict ' + (r.convicted ? 'guilty' : 'innocent') + '">' + (r.convicted ? 'GUILTY' : 'NOT GUILTY') + '</div>' +
+    '<div class="muted">' + r.guiltyVotes + ' guilty, ' + r.innocentVotes + ' not guilty' + (r.abstain ? ', ' + r.abstain + ' abstained' : '') + '</div>' +
+    '<hr><div class="muted small" style="font-weight:700;letter-spacing:2px;text-transform:uppercase">The truth</div>' +
+    '<div class="serif" style="font-size:26px;margin:4px 0 10px">' + (r.truthGuilty ? 'They did it.' : 'They were innocent.') + '</div>' +
+    '<span class="chip ' + (r.correct ? 'good' : 'bad') + '">' + (r.correct ? 'The jury got it right' : 'The jury got it wrong') + '</span></div>';
+
+  h += '<div class="card"><h3>What actually happened</h3><ul class="plain">' +
+    r.timeline.map(function(t){ return '<li><div class="small muted" style="font-weight:700">' + esc(t.label) + (t.herring ? ' <span class="chip warn" style="margin-left:6px">Red herring</span>' : '') + '</div>' + esc(t.truth) + '</li>'; }).join('') + '</ul></div>';
+
+  h += '<div class="card"><h3>Who was who</h3>';
+  r.witnesses.forEach(function(w){
+    h += '<div style="margin:14px 0 18px"><div class="row"><b class="grow">' + esc(w.name) + '</b><span class="chip ' + archeClass(w.archetype) + '">' + archeLabel(w.archetype) + '</span></div>' +
+      '<div class="small muted" style="margin:3px 0 6px">' + esc(w.motive) + '</div>';
+    w.facts.forEach(function(f){
+      var st = f.status === 'confirmed' ? 'confirmed' : f.status === 'contradicted' ? 'contradicted' : f.status === 'recanted' ? 'recanted' : f.status === 'unused' ? 'held back' : 'unchecked';
+      h += '<div class="rec ' + (f.kind === 'lie' ? 'contradicted' : f.status === 'confirmed' ? 'confirmed' : '') + '"><div class="small muted" style="font-weight:700">' + (f.kind === 'lie' ? 'A lie' : f.kind === 'partial' ? 'Vague truth' : 'True') + ' · ' + st + '</div>' + esc(f.text) + '</div>';
+    });
+    h += '</div>';
+  });
+  h += '</div>';
+
+  h += '<div class="card"><h3>Votes</h3><div class="small">' + r.votes.map(function(v){ return esc(v.name) + ': <b>' + (v.vote === 'guilty' ? 'guilty' : v.vote === 'innocent' ? 'not guilty' : 'abstained') + '</b>'; }).join('<br>') + '</div></div>';
+
+  h += '<div class="card"><h3>Points this case</h3><ul class="plain">';
+  var any = false;
+  S.players.forEach(function(p){
+    var d = r.deltas[p.id];
+    if (!d) return;
+    any = true;
+    h += '<li><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="score" style="color:' + (d.total >= 0 ? 'var(--good)' : 'var(--bad)') + '">' + (d.total > 0 ? '+' : '') + d.total + '</span></div>' +
+      '<div class="small muted">' + d.why.map(esc).join(' · ') + '</div></li>';
+  });
+  if (!any) h += '<li class="muted small">Nobody scored.</li>';
+  h += '</ul></div>';
+
+  h += '<div class="card"><h3>Standings</h3><ul class="plain">' +
+    sortedPlayers().map(function(p, i){ return '<li class="row"><span class="muted" style="width:24px">' + (i + 1) + '</span><span class="grow">' + esc(p.name) + '</span><span class="score">' + p.score + '</span></li>'; }).join('') + '</ul></div>';
+
+  if (S.me.isHost) {
+    var last = S.round >= S.rounds;
+    h += '<button class="btn primary" data-act="next">' + (last ? 'See final standings' : 'Next case (' + (S.round + 1) + ' of ' + S.rounds + ')') + '</button>' +
+      (last ? '' : '<button class="btn" style="margin-top:10px" data-act="final">End the game here</button>');
+  } else h += '<p class="muted center">Waiting for the host<span class="dots"> <span></span><span></span><span></span></span></p>';
+  return h;
+}
+
+function roundHTML(){
+  var h = topBar(S.endsAt ? '<span class="timer" data-end="' + S.endsAt + '">' + fmt(S.endsAt - (Date.now() + offset)) + '</span>' : '') +
+    stepper() +
+    '<div class="card"><div class="row" style="margin-bottom:8px"><span class="chip">' + esc(S.case.cat || 'Case') + '</span><span class="muted small grow" style="text-align:right">Case ' + S.round + ' of ' + S.rounds + ' · ' + S.me.score + ' pts</span></div>' +
+    '<h2>' + esc(S.case.title) + '</h2><p style="margin-top:8px">' + esc(S.case.charge) + '</p></div>';
+  h += hostBanner();
+  h += roleBanner();
+  h += todoCard();
+  if (S.phase === 'reveal') return h + resultHTML();
+  var unread = tab === 'notes' ? 0 : Math.max(0, S.inbox.length - seenInbox);
+  h += '<div class="tabs"><div class="tab ' + (tab === 'file' ? 'on' : '') + '" data-act="tab" data-tab="file">My file</div>' +
+    '<div class="tab ' + (tab === 'court' ? 'on' : '') + '" data-act="tab" data-tab="court">Court</div>' +
+    '<div class="tab ' + (tab === 'notes' ? 'on' : '') + '" data-act="tab" data-tab="notes">Whispers' + (unread ? '<span class="badge">' + unread + '</span>' : '') + '</div></div>';
+  h += tab === 'file' ? fileTab() : tab === 'court' ? courtTab() : notesTab();
+  if (tab === 'notes') seenInbox = S.inbox.length;
+  return h;
+}
+
+function finalHTML(){
+  var list = sortedPlayers();
+  var h = topBar() + hostBanner() + '<div class="center" style="margin:22px 0"><div class="muted small" style="letter-spacing:3px;text-transform:uppercase">The court is adjourned</div><h1 style="font-size:32px;letter-spacing:3px;margin-top:6px">FINAL STANDINGS</h1></div><div class="card"><ul class="plain">';
+  list.forEach(function(p, i){
+    h += '<li class="row"><span class="serif" style="width:42px;font-size:' + (i === 0 ? 20 : 16) + 'px;color:' + (i === 0 ? 'var(--gold)' : 'var(--muted)') + '">' + (i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : (i + 1) + 'th') + '</span><span class="grow" style="' + (i === 0 ? 'font-family:var(--serif);font-size:20px;font-weight:700' : '') + '">' + esc(p.name) + '</span><span class="score">' + p.score + '</span></li>';
+  });
+  h += '</ul></div>';
+  if (S.me.isHost) h += '<button class="btn primary" data-act="newgame">Play again (reset scores)</button>';
+  else h += '<p class="muted center">Waiting for the host to start another game.</p>';
+  return h;
+}
+
+/* ---------- render ---------- */
+function render(){
+  var app = $('#app');
+  var active = document.activeElement;
+  var activeId = active && active.id, selStart = null, selEnd = null;
+  if (activeId && active.setSelectionRange) { try { selStart = active.selectionStart; selEnd = active.selectionEnd; } catch (e) {} }
+  var scrollY = window.scrollY;
+  var key = S ? S.phase + ':' + S.round : '';
+  if (key !== lastPhase) { lastPhase = key; scrollY = 0; }
+
+  if (!S) app.innerHTML = homeHTML();
+  else if (S.phase === 'lobby') app.innerHTML = lobbyHTML();
+  else if (S.phase === 'final') app.innerHTML = finalHTML();
+  else app.innerHTML = roundHTML();
+
+  if (S && S.phase === 'lobby' && window.qrcode && $('#qr')) {
+    try {
+      var q = window.qrcode(0, 'M');
+      q.addData(location.origin + '/?room=' + S.code);
+      q.make();
+      $('#qr').innerHTML = q.createImgTag(6, 0, 'QR code to join room ' + S.code);
+    } catch (e) {}
+  }
+  if (activeId) {
+    var el = document.getElementById(activeId);
+    if (el) { el.focus(); if (selStart != null) { try { el.setSelectionRange(selStart, selEnd); } catch (e) {} } }
+  }
+  try { window.scrollTo(0, scrollY); } catch (e) {}
+}
+
+setInterval(function(){
+  var t = document.querySelector('.timer');
+  if (t && S) t.textContent = fmt(Number(t.dataset.end) - (Date.now() + offset));
+}, 500);
+
+/* ---------- events ---------- */
+document.addEventListener('click', function(e){
+  var el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  var a = el.dataset.act, d = el.dataset;
+  if (a === 'rules') openSheet('How to play', rulesHTML());
+  else if (a === 'closesheet') closeSheet();
+  else if (a === 'create' || a === 'join') {
+    var name = ($('#name').value || '').trim();
+    var code = ($('#code') ? $('#code').value : '').trim().toUpperCase();
+    try { localStorage.setItem('stand_name', name); } catch (x) {}
+    if (!name) { homeError = 'Enter a name first.'; return render(); }
+    if (a === 'join' && code.length !== 4) { homeError = 'Room codes have 4 letters.'; return render(); }
+    socket.emit(a, { name: name, code: code }, function(res){
+      if (!res || !res.ok) { homeError = (res && res.error) || 'Could not connect.'; return render(); }
+      homeError = '';
+      saveSession(res.code, res.token);
+      if (history.replaceState) history.replaceState(null, '', '/');
+      urlRoom = '';
+    });
+  }
+  else if (a === 'copy') {
+    var url = location.origin + '/?room=' + S.code;
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(function(){ toast('Link copied'); }, function(){ toast(url); });
+    else toast(url);
+  }
+  else if (a === 'share') {
+    var u = location.origin + '/?room=' + S.code;
+    if (navigator.share) navigator.share({ title: 'The Stand', text: 'Join my trial. Room ' + S.code, url: u }).catch(function(){});
+    else { if (navigator.clipboard) navigator.clipboard.writeText(u); toast('Link copied'); }
+  }
+  else if (a === 'startgame') act('start');
+  else if (a === 'skip') act('skip');
+  else if (a === 'next') act('next');
+  else if (a === 'final') act('final');
+  else if (a === 'newgame') act('newgame');
+  else if (a === 'claim') act('claimHost');
+  else if (a === 'kick') act('kick', { pid: d.pid });
+  else if (a === 'bots') act('bots', { n: Number(d.n) });
+  else if (a === 'addseat') {
+    var sn = $('#seat-name'); var nm = sn ? sn.value.trim() : '';
+    if (!nm) { toast('Type a name first.', 'err'); return; }
+    act('addseat', { name: nm }); if (sn) sn.value = '';
+  }
+  else if (a === 'rename') {
+    openSheet('Change your name', '<div class="stack"><input id="new-name" maxlength="16" autocomplete="off" value="' + esc(d.name) + '"><div class="btns"><button class="btn" data-act="closesheet">Cancel</button><button class="btn primary" data-act="dorename">Save</button></div></div>');
+    setTimeout(function(){ var i = $('#new-name'); if (i) { i.focus(); i.select(); } }, 60);
+  }
+  else if (a === 'dorename') {
+    var nn = $('#new-name'); var v = nn ? nn.value.trim() : '';
+    if (!v) { toast('Enter a name.', 'err'); return; }
+    try { localStorage.setItem('stand_name', v); } catch (x) {}
+    closeSheet(); act('rename', { name: v });
+  }
+  else if (a === 'clearbots') act('clearbots');
+  else if (a === 'ready') act('ready');
+  else if (a === 'testify') act('testify', { id: d.id });
+  else if (a === 'exhibit') {
+    openSheet('Request this exhibit?',
+      '<p><b>' + esc(d.name) + '</b></p><p class="muted" style="margin-top:8px">You will not know what it shows until it is entered. It can hurt your own side, and everyone will see it.</p>' +
+      '<div class="btns" style="margin-top:18px"><button class="btn" data-act="closesheet">Cancel</button><button class="btn primary" data-act="doexhibit" data-atom="' + esc(d.atom) + '">Request</button></div>');
+  }
+  else if (a === 'doexhibit') { closeSheet(); act('exhibit', { atom: Number(d.atom) }); }
+  else if (a === 'stand') act('stand', { choice: d.choice });
+  else if (a === 'vote') act('vote', { choice: d.choice });
+  else if (a === 'tab') { tab = d.tab; render(); }
+  else if (a === 'whisper') {
+    act('whisper', { to: draft.to, text: draft.text });
+    draft.text = '';
+    setTimeout(render, 50);
+  }
+});
+
+document.addEventListener('input', function(e){
+  var t = e.target;
+  if (t.id === 'w-text') draft.text = t.value;
+  if (t.id === 'code') t.value = t.value.toUpperCase().replace(/[^A-Z]/g, '');
+});
+document.addEventListener('change', function(e){
+  var t = e.target;
+  if (t.id === 'w-to') draft.to = t.value;
+  if (t.id === 'set-cross' || t.id === 'set-rounds') {
+    act('settings', { crossMins: Number($('#set-cross').value), rounds: Number($('#set-rounds').value) });
+  }
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && sheetOpen) return closeSheet();
+  if (e.key !== 'Enter') return;
+  if (e.target.id === 'code') { var b = document.querySelector('[data-act="join"]'); if (b) b.click(); }
+  else if (e.target.id === 'new-name') { var sv = document.querySelector('[data-act="dorename"]'); if (sv) sv.click(); }
+  else if (e.target.id === 'seat-name') { var ad = document.querySelector('[data-act="addseat"]'); if (ad) ad.click(); }
+  else if (e.target.id === 'name') {
+    var c = $('#code') && $('#code').value.trim();
+    var btn = document.querySelector(c ? '[data-act="join"]' : '[data-act="create"]');
+    if (btn) btn.click();
+  }
+});
+
+render();
+})();
+</script>
+</body>
+</html>
