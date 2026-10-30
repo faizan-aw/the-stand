@@ -41,7 +41,8 @@ In the lobby the host can add test bots, or add a seat under any name. Those sea
 
 ## How a case works
 
-- One player is the defendant, one the prosecutor, one the defense. Everyone else is a witness and also sits on the jury. Roles rotate every case.
+- One player is the defendant, one the prosecutor, one the defense. Everyone else is either a witness (holds private facts) or a juror (no file, listens and votes). From 7 players the jury is separate; with fewer, or if the host turns it off, the witnesses are the jury too. Roles rotate every case.
+- Time settings (host, in the lobby): cross-examination 3 to 30 minutes, jury talk and vote 1 to 8 minutes. Everyone can tap the Done button, and if more than half do, the game moves on without waiting for the timer.
 - Every case has a hidden truth: guilty or innocent, picked at random. Most of the real evidence points the right way, but two facts per case are red herrings that point the wrong way, so one exhibit never settles a case.
 - Witnesses get private facts. Some are honest, some have a secret reason to lean one way, some are liars with a cover story.
 - Cross-examination is out loud. Witnesses put facts on the record, lawyers have 2 exhibit requests each, and anyone can send 3 private whispers.

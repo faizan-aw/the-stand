@@ -68,7 +68,7 @@ function makeRoom() {
     endsAt: null,
     timer: null,
     round: 0,
-    settings: { crossMins: 8, rounds: 3 },
+    settings: { crossMins: 12, verdictMins: 3, rounds: 3, sepJury: true },
     usedCases: [],
     g: null,
     lastActive: Date.now()
@@ -105,7 +105,20 @@ function startRound(room) {
   const special = order.slice(0, 3);
   special.forEach(p => p.specials++);
   const [def, pro, dfn] = shuffle(special);
-  const witnesses = present.filter(p => !special.includes(p));
+  const others = present.filter(p => !special.includes(p));
+  // Separate jury: some of the others become jurors with no private facts. Needs at least
+  // 2 witnesses and 2 jurors, so below 7 players everyone else is witness and juror.
+  let witnesses = others, jurorPlayers = others, separate = false;
+  if (room.settings.sepJury) {
+    let nJ = Math.max(2, Math.round(others.length * 0.45));
+    if (nJ % 2 === 0 && others.length - (nJ + 1) >= 2) nJ++;
+    if (others.length - nJ >= 2) {
+      const mixed = shuffle(others);
+      jurorPlayers = mixed.slice(0, nJ);
+      witnesses = mixed.slice(nJ);
+      separate = true;
+    }
+  }
 
   let pool = CASES.map((_, i) => i).filter(i => !room.usedCases.includes(i));
   if (!pool.length) { room.usedCases = []; pool = CASES.map((_, i) => i); }
@@ -193,6 +206,7 @@ function startRound(room) {
     facts: shuffle(atoms.map(a => a.idx)).slice(0, 2).map(i => ({ id: rid(6), atom: i, kind: 'true', text: atoms[i].truth }))
   };
   const lead = idx => ({ atom: idx, text: atoms[idx].partial });
+  if (separate) jurorPlayers.forEach(p => { hands[p.id] = { role: 'juror', archetype: 'juror', want: 'truth', facts: [] }; });
   hands[pro.id] = { role: 'prosecutor', lead: lead(rnd(atoms.length)) };
   hands[dfn.id] = { role: 'defense', lead: lead(rnd(atoms.length)) };
 
@@ -206,7 +220,10 @@ function startRound(room) {
     defId: def.id,
     proId: pro.id,
     dfnId: dfn.id,
-    jurors: witnesses.map(p => p.id),
+    witnesses: witnesses.map(p => p.id),
+    jurors: jurorPlayers.map(p => p.id),
+    separate,
+    done: new Set(),
     hands,
     record: [],
     revealed: [],
@@ -238,7 +255,7 @@ function setPhase(room, phase, secs) {
 
 function advance(room) {
   switch (room.phase) {
-    case 'read': return setPhase(room, 'cross', Math.round(room.settings.crossMins * 60));
+    case 'read': room.g.done = new Set(); return setPhase(room, 'cross', Math.round(room.settings.crossMins * 60));
     case 'cross': return toStand(room);
     case 'stand': return resolveStand(room);
     case 'verdict': return resolveVerdict(room);
@@ -246,7 +263,7 @@ function advance(room) {
 }
 
 const activeRecord = g => g.record.filter(e => e.status !== 'recanted');
-const standers = (room, g) => g.jurors.filter(pid => {
+const standers = (room, g) => g.witnesses.filter(pid => {
   const p = room.players.get(pid);
   return p && isHere(p) && activeRecord(g).some(e => e.pid === pid);
 });
@@ -267,7 +284,7 @@ function resolveStand(room) {
     if (choice === 'recant') g.record.forEach(e => { if (e.pid === pid) e.status = 'recanted'; });
   });
   g.standPublic = pub;
-  setPhase(room, 'verdict', VERDICT_SECS);
+  setPhase(room, 'verdict', Math.round(room.settings.verdictMins * 60));
 }
 
 function resolveVerdict(room) {
@@ -291,7 +308,7 @@ function resolveVerdict(room) {
   if (!convicted) { add(g.defId, 3, 'acquitted'); add(g.dfnId, 3, 'won the case'); }
   else add(g.proId, 5, 'won the case');
 
-  g.jurors.forEach(pid => {
+  [...new Set([...g.witnesses, ...g.jurors])].forEach(pid => {
     const hand = g.hands[pid];
     const mine = g.record.filter(e => e.pid === pid);
     const confirmed = mine.filter(e => e.status === 'confirmed').length;
@@ -319,7 +336,8 @@ function resolveVerdict(room) {
     correct,
     timeline: g.atoms.map(a => ({ label: a.label, truth: a.truth, ex: a.ex, herring: a.herring })),
     votes: g.jurors.map(pid => ({ name: nameOf(pid), vote: g.votes[pid] || 'abstain' })),
-    witnesses: g.jurors.map(pid => {
+    separate: g.separate,
+    witnesses: g.witnesses.map(pid => {
       const h = g.hands[pid];
       return {
         name: nameOf(pid),
@@ -343,6 +361,10 @@ function checkEarly(room) {
   if (room.phase === 'read') {
     const all = Object.keys(g.hands).filter(here);
     if (all.length && all.every(pid => g.ready.has(pid))) advance(room);
+  } else if (room.phase === 'cross') {
+    const all = Object.keys(g.hands).filter(here);
+    const n = all.filter(pid => g.done.has(pid)).length;
+    if (all.length && n * 2 > all.length) advance(room);
   } else if (room.phase === 'stand') {
     const need = standers(room, g);
     if (need.every(pid => g.stand[pid])) advance(room);
@@ -358,7 +380,8 @@ const roleOf = (g, pid) =>
     : pid === g.defId ? 'defendant'
       : pid === g.proId ? 'prosecutor'
         : pid === g.dfnId ? 'defense'
-          : g.jurors.includes(pid) ? 'witness' : 'spectator';
+          : g.witnesses.includes(pid) ? 'witness'
+            : g.jurors.includes(pid) ? 'juror' : 'spectator';
 
 function applyExhibit(g, atomIdx) {
   const a = g.atoms[atomIdx];
@@ -443,9 +466,18 @@ function doStand(room, pid, choice) {
 function doVote(room, pid, choice) {
   const g = room.g;
   if (room.phase !== 'verdict') return 'Voting is not open.';
-  if (!g.jurors.includes(pid)) return 'Only witnesses sit on the jury.';
+  if (!g.jurors.includes(pid)) return 'Only jurors can vote.';
   if (choice !== 'guilty' && choice !== 'innocent') return 'Pick a verdict.';
   g.votes[pid] = choice;
+  broadcast(room);
+  checkEarly(room);
+  return null;
+}
+
+function doDone(room, pid) {
+  const g = room.g;
+  if (room.phase !== 'cross' || !g.hands[pid]) return 'Not the right time.';
+  if (g.done.has(pid)) g.done.delete(pid); else g.done.add(pid);
   broadcast(room);
   checkEarly(room);
   return null;
@@ -485,7 +517,7 @@ function botsOnPhase(room) {
         doStand(room, p.id, Math.random() < 0.12 ? 'recant' : 'stand');
       }, 3, 9);
     }
-    if (phase === 'verdict' && hand.role === 'witness') {
+    if (phase === 'verdict' && g.jurors.includes(p.id)) {
       later(() => {
         let lean = 0;
         g.record.forEach(e => {
@@ -501,7 +533,7 @@ function botsOnPhase(room) {
 /* ---------- views ---------- */
 function publicRole(g, pid) {
   const r = roleOf(g, pid);
-  return r === 'defendant' ? 'Defendant' : r === 'prosecutor' ? 'Prosecutor' : r === 'defense' ? 'Defense' : r === 'witness' ? 'Witness' : 'Spectator';
+  return r === 'defendant' ? 'Defendant' : r === 'prosecutor' ? 'Prosecutor' : r === 'defense' ? 'Defense' : r === 'witness' ? 'Witness' : r === 'juror' ? 'Juror' : 'Spectator';
 }
 
 function privateHand(g, pid) {
@@ -521,6 +553,7 @@ function privateHand(g, pid) {
       }))
     };
   }
+  if (h.role === 'juror') return { role: 'juror' };
   if (h.role === 'defendant') return { role: 'defendant', guilty: h.guilty, facts: h.facts.map(f => ({ id: f.id, text: f.text })) };
   return { role: h.role, lead: h.lead.text };
 }
@@ -575,6 +608,8 @@ function view(room, pid) {
       readyTotal: readyNeed.length,
       stand: standers(room, g).filter(id => g.stand[id]).length,
       standTotal: standers(room, g).length,
+      done: Object.keys(g.hands).filter(here).filter(id => g.done.has(id)).length,
+      doneTotal: Object.keys(g.hands).filter(here).length,
       voted: g.jurors.filter(id => here(id) && g.votes[id]).length,
       votedTotal: g.jurors.filter(here).length
     };
@@ -582,6 +617,9 @@ function view(room, pid) {
     v.needStand = standers(room, g).includes(pid);
     v.stand = g.stand[pid] || null;
     v.vote = g.votes[pid] || null;
+    v.canVote = g.jurors.includes(pid);
+    v.separate = g.separate;
+    v.done = g.done.has(pid);
     v.standPublic = g.standPublic;
     v.jurySize = g.jurors.length;
     v.result = room.phase === 'reveal' ? g.result : null;
@@ -653,8 +691,10 @@ io.on('connection', socket => {
       case 'settings':
         err = need(isHost, 'Host only.') || need(room.phase === 'lobby' || room.phase === 'reveal', 'Not now.');
         if (!err) {
-          const c = Number(msg.crossMins), r = Number(msg.rounds);
-          if ([2, 3, 5, 8, 12].includes(c)) room.settings.crossMins = c;
+          const c = Number(msg.crossMins), r = Number(msg.rounds), vm = Number(msg.verdictMins);
+          if ([3, 5, 8, 12, 15, 20, 30].includes(c)) room.settings.crossMins = c;
+          if ([1, 2, 3, 5, 8].includes(vm)) room.settings.verdictMins = vm;
+          if (typeof msg.sepJury === 'boolean') room.settings.sepJury = msg.sepJury;
           if (r >= 1 && r <= 8) room.settings.rounds = r;
           broadcast(room);
         }
@@ -738,6 +778,7 @@ io.on('connection', socket => {
           setPhase(room, 'lobby', null);
         }
         break;
+      case 'done': err = room.g ? doDone(room, pid) : 'No round.'; break;
       case 'ready': err = room.g ? doReady(room, pid) : 'No round.'; break;
       case 'testify': err = room.g ? doTestify(room, pid, msg.id) : 'No round.'; break;
       case 'exhibit': err = room.g ? doExhibit(room, pid, Number(msg.atom)) : 'No round.'; break;

@@ -78,6 +78,7 @@ label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight
 .chip.prosecutor{background:#fbe9df;color:#b04d28;border-color:#f1cdb9}
 .chip.defense{background:#e3eef9;color:#2a679f;border-color:#bfd7ee}
 .chip.witness{background:#eeece7;color:#5d584e;border-color:#dcd7cb}
+.chip.juror{background:#e6f0e8;color:#2f6a46;border-color:#c3dccb}
 .chip.good{background:var(--good-soft);color:var(--good);border-color:#c3e0cf}
 .chip.bad{background:var(--bad-soft);color:var(--bad);border-color:#efc7bf}
 .chip.warn{background:var(--warn-soft);color:var(--warn);border-color:#eadbb2}
@@ -106,6 +107,7 @@ label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight
 .role-banner.prosecutor{background:#fbe9df;color:#8a3a1c}
 .role-banner.defense{background:#e3eef9;color:#1f4f7c}
 .role-banner.witness{background:#eeece7;color:#4a463e}
+.role-banner.juror{background:#e6f0e8;color:#27553a}
 .role-banner.spectator{background:#eeece7;color:#4a463e}
 .todo{font-size:17px;line-height:1.45}
 .todo-sub{margin-top:8px;font-size:14px;color:var(--muted)}
@@ -241,9 +243,9 @@ function closeSheet(){
 
 var NOW = {
   read: 'Read your private file in the My file tab and keep your screen to yourself. When you are done, tap I\'m ready. The game moves on once everyone is ready, or when the timer ends.',
-  cross: 'Cross-examination is out loud, in the room. Lawyers question the witnesses. Witnesses can put facts on the record from My file. Lawyers can spend their exhibit requests in the Court tab. Anyone can send private whispers.',
+  cross: 'Cross-examination is out loud, in the room. Lawyers question the witnesses. Witnesses can put facts on the record from My file. Lawyers can spend their exhibit requests in the Court tab. Anyone can send private whispers. When the room is done talking, tap the Done button. If more than half of the players tap it, the game moves on without waiting for the timer.',
   stand: 'Everyone who put something on the record now chooses: stand by it, or recant. Choices are secret until everyone has decided, then they are shown together.',
-  verdict: 'Only witnesses vote. Everyone else watches. Conviction needs more than half of the jury. A tie means not guilty.',
+  verdict: 'Only the jury votes. Talk it over first, then vote. Conviction needs more than half of the jury. A tie means not guilty. The game moves on as soon as every juror has voted.',
   reveal: 'The truth is out. Look at who lied, why they did it, and how the points were earned.'
 };
 
@@ -253,18 +255,20 @@ function rulesHTML(){
   h += '<details open><summary>The idea</summary><div class="in">' +
     '<p>Someone is on trial. Nobody knows for sure whether they did it. Everyone holds a small piece of the truth, and some of those pieces are lies. Even the real evidence is mixed: a couple of true facts in every case are <b>red herrings</b> that point the wrong way.</p>' +
     '<p>Talk, bluff, make deals, then decide. When the verdict is in, the game shows what really happened and who was lying.</p>' +
-    '<p>You need <b>6 to 16 players</b>, each on their own phone, in the same room. It is best with 8 or more.</p></div></details>';
+    '<p>You need <b>6 to 16 players</b>, each on their own phone, in the same room. It is best with 8 or more. From 7 players the jury is separate from the witnesses.</p></div></details>';
   h += '<details><summary>The roles</summary><div class="in"><ul>' +
     '<li><b>Defendant</b> (1). Secretly knows whether they did it. Wants to be acquitted, and may say anything.</li>' +
     '<li><b>Prosecutor</b> (1). Wants a conviction, whatever the truth.</li>' +
     '<li><b>Defense</b> (1). Wants an acquittal, whatever the truth.</li>' +
-    '<li><b>Witness</b> (everyone else). Holds private facts and a private motive. Witnesses are also the jury.</li></ul>' +
+    '<li><b>Witness</b>. Holds private facts and a private motive. Some are honest, some are biased, some are liars.</li>' +
+    '<li><b>Juror</b>. Has no private file. Listens, questions the witnesses out loud, whispers, and votes on the verdict.</li></ul>' +
+    '<p>Everyone who is not a lawyer or the defendant is either a witness or a juror, dealt at random. The host can turn the separate jury off. It also turns itself off with fewer than 7 players, and then the witnesses are the jury too.</p>' +
     '<p>Roles are dealt again every case, so everyone gets a turn at the interesting ones.</p></div></details>';
   h += '<details><summary>How one case plays</summary><div class="in"><ul>' +
     '<li><b>1. Read.</b> Study your private file.</li>' +
     '<li><b>2. Cross-examine.</b> Talk out loud. Put facts on the record, request exhibits, whisper.</li>' +
     '<li><b>3. Stand or recant.</b> Each witness secretly decides whether to stand by their record. Answers are shown together.</li>' +
-    '<li><b>4. Verdict.</b> The jury votes secretly. All votes are shown at once.</li>' +
+    '<li><b>4. Verdict.</b> The jury talks it over, then votes secretly. All votes are shown at once.</li>' +
     '<li><b>5. The truth.</b> The real story, the liars and everyone\'s motives are revealed, then points are counted.</li></ul></div></details>';
   h += '<details><summary>Facts, the record and exhibits</summary><div class="in">' +
     '<p>A witness has two private facts. A fact can be <b>clear</b> (true), <b>vague</b> (true but fuzzy) or a <b>cover story</b> (false, only for liars).</p>' +
@@ -282,19 +286,21 @@ function rulesHTML(){
     '<li>Recanting: <b>-2</b></li>' +
     '<li>Witness who only wanted the truth, if the jury is right: <b>+2</b></li>' +
     '<li>Witness with a secret motive who gets the verdict they wanted: <b>+3</b></li>' +
-    '<li>Juror who votes correctly: <b>+1</b></li></ul></div></details>';
+    '<li>Juror who votes correctly: <b>+1</b></li>' +
+    '<li>Juror, if the jury as a whole is right: <b>+2</b></li></ul></div></details>';
   h += '<details><summary>Tips</summary><div class="in"><ul>' +
     '<li><b>Liars:</b> mix your cover story with something true. Stay calm. Once cross-examination ends you can no longer be exposed, so recanting then is only a way to lose points.</li>' +
     '<li><b>Lawyers:</b> make witnesses commit to the record before you spend an exhibit.</li>' +
     '<li><b>Honest witnesses:</b> put your clear facts on the record early. Confirmed testimony is worth points.</li>' +
-    '<li><b>Everyone:</b> watch who is eager to push a particular verdict.</li></ul></div></details>';
+    '<li><b>Jurors:</b> you only know what the room tells you. Question the witnesses and see whose story holds up.</li>' +
+    '<li><b>Everyone:</b> watch who is eager to push a particular verdict. When you are done talking, tap Done so the game does not wait for the timer.</li></ul></div></details>';
   return h;
 }
 
 /* ---------- helpers ---------- */
 var PHASE = { read: 'Read your file', cross: 'Cross-examination', stand: 'Stand or recant', verdict: 'Verdict', reveal: 'The truth' };
 var STEPS = [['read', 'Read'], ['cross', 'Question'], ['stand', 'Stand'], ['verdict', 'Verdict']];
-var ROLE = { defendant: 'Defendant', prosecutor: 'Prosecutor', defense: 'Defense', witness: 'Witness', spectator: 'Spectator' };
+var ROLE = { defendant: 'Defendant', prosecutor: 'Prosecutor', defense: 'Defense', witness: 'Witness', juror: 'Juror', spectator: 'Spectator' };
 function chip(role){ return '<span class="chip ' + esc(role) + '">' + esc(ROLE[role] || role) + '</span>'; }
 function fmt(ms){ ms = Math.max(0, ms); var s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
 function sortedPlayers(){ return S.players.slice().sort(function(a, b){ return b.score - a.score; }); }
@@ -349,7 +355,10 @@ function lobbyHTML(){
   if (me.isHost) {
     h += '<div class="card stack"><h3>Game settings</h3>' +
       '<div><label for="set-cross">Cross-examination length</label><select id="set-cross">' +
-      [2, 3, 5, 8, 12].map(function(m){ return '<option value="' + m + '"' + (S.settings.crossMins === m ? ' selected' : '') + '>' + m + ' minutes</option>'; }).join('') + '</select></div>' +
+      [3, 5, 8, 12, 15, 20, 30].map(function(m){ return '<option value="' + m + '"' + (S.settings.crossMins === m ? ' selected' : '') + '>' + m + ' minutes</option>'; }).join('') + '</select></div>' +
+      '<div><label for="set-verdict">Jury talk and vote time</label><select id="set-verdict">' +
+      [1, 2, 3, 5, 8].map(function(m){ return '<option value="' + m + '"' + (S.settings.verdictMins === m ? ' selected' : '') + '>' + m + (m === 1 ? ' minute' : ' minutes') + '</option>'; }).join('') + '</select></div>' +
+      '<div><label for="set-sep">Separate jury and witnesses</label><select id="set-sep"><option value="1"' + (S.settings.sepJury ? ' selected' : '') + '>On (7 or more players)</option><option value="0"' + (S.settings.sepJury ? '' : ' selected') + '>Off, witnesses are the jury</option></select></div>' +
       '<div><label for="set-rounds">Number of cases</label><select id="set-rounds">' +
       [1, 2, 3, 4, 5, 6, 8].map(function(r){ return '<option value="' + r + '"' + (S.settings.rounds === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></div></div>' +
       '<button class="btn primary" data-act="startgame"' + (online < S.minPlayers ? ' disabled' : '') + '>Start the trial</button>' +
@@ -379,9 +388,10 @@ function roleBanner(){
   if (r === 'defendant') goal = 'Get acquitted. You know the truth. Say whatever helps.';
   else if (r === 'prosecutor') goal = 'Convince the jury to convict.';
   else if (r === 'defense') goal = 'Convince the jury to acquit.';
+  else if (r === 'juror') goal = 'You decide the verdict. Question the witnesses and work out who is telling the truth.';
   else if (r === 'witness') goal = S.hand && S.hand.want === 'convict' ? 'Secret goal: get a conviction.' : S.hand && S.hand.want === 'acquit' ? 'Secret goal: get an acquittal.' : 'Goal: help the jury reach the right verdict.';
   else goal = 'You will be dealt in next case.';
-  return '<div class="role-banner ' + esc(r) + '"><div class="small" style="font-weight:700;letter-spacing:1.4px;text-transform:uppercase;opacity:.75">You are</div><div class="who">' + (r === 'witness' ? 'a Witness and Juror' : 'the ' + esc(ROLE[r] || r)) + '</div><div class="goal">' + esc(goal) + '</div></div>';
+  return '<div class="role-banner ' + esc(r) + '"><div class="small" style="font-weight:700;letter-spacing:1.4px;text-transform:uppercase;opacity:.75">You are</div><div class="who">' + (r === 'witness' ? (S.canVote ? 'a Witness and Juror' : 'a Witness') : r === 'juror' ? 'a Juror' : 'the ' + esc(ROLE[r] || r)) + '</div><div class="goal">' + esc(goal) + '</div></div>';
 }
 
 function todoCard(){
@@ -395,9 +405,12 @@ function todoCard(){
     g = '<p class="todo"><b>Talk out loud.</b> Court is in session.</p>';
     if (S.role === 'witness') g += '<p class="todo-sub">Answer questions. Put facts on the record from <b>My file</b> when you are ready to commit to them.</p>';
     else if (S.role === 'prosecutor' || S.role === 'defense') g += '<p class="todo-sub">Question the witnesses. You have <b>' + S.exhibitsLeft + '</b> exhibit request' + (S.exhibitsLeft === 1 ? '' : 's') + ' left, in the <b>Court</b> tab.</p>';
+    else if (S.role === 'juror') g += '<p class="todo-sub">Listen, ask questions out loud, and whisper if you want. You vote later.</p>';
     else if (S.role === 'defendant') g += '<p class="todo-sub">You can say anything. Lie if it helps.</p>';
     else g += '<p class="todo-sub">You are watching this case. You will be dealt in next time.</p>';
-    if (S.me.isHost) g += '<button class="btn sm" style="margin-top:14px" data-act="skip">End cross-examination</button>';
+    if (S.role !== 'spectator') g += '<button class="btn primary" style="margin-top:14px" data-act="done">' + (S.done ? 'Done. Tap to undo' : 'We are done talking, move on') + '</button>' +
+      '<p class="todo-sub">' + p.done + ' of ' + p.doneTotal + ' done. More than half moves the game on.</p>';
+    if (S.me.isHost) g += '<button class="btn sm" style="margin-top:10px" data-act="skip">End cross-examination now</button>';
   } else if (ph === 'stand') {
     if (S.needStand) {
       g = '<p class="todo">Stand by your testimony, or recant?</p>' +
@@ -411,11 +424,11 @@ function todoCard(){
     if (S.standPublic && S.standPublic.length) {
       g += '<div class="small muted" style="margin-bottom:12px">' + S.standPublic.map(function(x){ return esc(x.name) + (x.choice === 'recant' ? ' <b style="color:var(--bad)">recanted</b>' : ' stood by their testimony'); }).join('<br>') + '</div>';
     }
-    if (S.role === 'witness') {
-      g += '<p class="todo">You are on the jury. How do you vote?</p>' +
+    if (S.canVote) {
+      g += '<p class="todo">You are on the jury. Talk it over, then vote.</p>' +
         '<div class="btns" style="margin-top:14px"><button class="btn bad' + (S.vote === 'guilty' ? ' sel' : '') + '" data-act="vote" data-choice="guilty">Guilty</button>' +
         '<button class="btn good' + (S.vote === 'innocent' ? ' sel' : '') + '" data-act="vote" data-choice="innocent">Not guilty</button></div>';
-    } else g += '<p class="todo">The jury is voting.</p>';
+    } else g += '<p class="todo">The jury is deciding.</p>';
     g += '<p class="todo-sub">' + p.voted + ' of ' + p.votedTotal + ' voted</p>';
     if (S.me.isHost) g += '<button class="btn sm" style="margin-top:10px" data-act="skip">Close the vote</button>';
   } else return '';
@@ -425,7 +438,10 @@ function todoCard(){
 function fileTab(){
   var h = S.hand, out = '';
   if (!h) return '<div class="card"><p>You are watching this case. You will be dealt in next time.</p></div>';
-  if (h.role === 'witness') {
+  if (h.role === 'juror') {
+    out += '<div class="card"><h3>You are a juror</h3><p>You have no private file. Listen to the witnesses, question them out loud, and use the Court tab to see what is on the record and which exhibits have been shown.</p>' +
+      '<p class="muted small" style="margin-top:10px">Some witnesses may be lying and some may have a hidden reason to push a verdict. Vote for what you believe is true.</p></div>';
+  } else if (h.role === 'witness') {
     out += '<div class="card"><h3>Your angle</h3><p>' + esc(h.motive) + '</p></div>';
     out += '<div class="card"><h3>What you know</h3><div class="stack">';
     h.facts.forEach(function(f){
@@ -668,6 +684,7 @@ document.addEventListener('click', function(e){
   }
   else if (a === 'clearbots') act('clearbots');
   else if (a === 'ready') act('ready');
+  else if (a === 'done') act('done');
   else if (a === 'testify') act('testify', { id: d.id });
   else if (a === 'exhibit') {
     openSheet('Request this exhibit?',
@@ -693,8 +710,8 @@ document.addEventListener('input', function(e){
 document.addEventListener('change', function(e){
   var t = e.target;
   if (t.id === 'w-to') draft.to = t.value;
-  if (t.id === 'set-cross' || t.id === 'set-rounds') {
-    act('settings', { crossMins: Number($('#set-cross').value), rounds: Number($('#set-rounds').value) });
+  if (t.id === 'set-cross' || t.id === 'set-rounds' || t.id === 'set-verdict' || t.id === 'set-sep') {
+    act('settings', { crossMins: Number($('#set-cross').value), rounds: Number($('#set-rounds').value), verdictMins: Number($('#set-verdict').value), sepJury: $('#set-sep').value === '1' });
   }
 });
 document.addEventListener('keydown', function(e){
