@@ -50,7 +50,7 @@ In the lobby the host can add test bots, or add a seat under any name. Those sea
 
 ## The cases
 
-20 hand-written cases are built into `cases.js`. No AI, no internet service, no cost. A game never repeats a case until all 20 have been used.
+20 hand-written cases set in Pakistan (Karachi, Lahore, Islamabad, Rawalpindi, Multan) are built into `cases.js`. No AI, no internet service, no cost. A game never repeats a case until all 20 have been used.
 
 ## Adding or editing cases
 

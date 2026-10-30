@@ -663,7 +663,7 @@ io.on('connection', socket => {
         err = need(isHost, 'Host only.') || need(room.phase === 'lobby', 'Bots can only join in the lobby.');
         if (!err) {
           const n = Math.max(1, Math.min(10, Number(msg.n) || 1));
-          const bn = ['Ash', 'Bex', 'Cal', 'Dev', 'Eli', 'Fay', 'Gus', 'Hana', 'Ivo', 'Jo'];
+          const bn = ['Ahmed', 'Bilal', 'Danish', 'Fatima', 'Hamza', 'Iqra', 'Junaid', 'Kiran', 'Maryam', 'Nabeel'];
           let i = [...room.players.values()].filter(p => p.bot).length;
           for (let k = 0; k < n && room.players.size < MAX_PLAYERS; k++, i++) addPlayer(room, bn[i % bn.length], null, true);
           broadcast(room);
